@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=61.0", "cmake>=3.14"]
+build-backend = "setuptools.build_meta"
+
+
+[project]
+name = "voice_activity_detector"
+dynamic = ["version"]
+description = "Voice Activity Detection Python binding using pybind11"
+readme = {file = "README.md", content-type = "text/markdown"}
+requires-python = ">=3.8"
+authors = [
+  {name = "Hu Liang", email = "lianghu@hccl.ioa.ac.cn"}
+]
+classifiers=[
+    "Programming Language :: C++",
+    "Programming Language :: Python",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dependencies = [
+    "numpy>=1.21",
+]
+
+
+[tool.setuptools]
+packages = ["voice_activity_detector"]
+package-dir = {voice_activity_detector = "python/voice_activity_detector"}

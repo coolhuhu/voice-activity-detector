@@ -1,0 +1,9 @@
+.vscode
+build/*
+third-part/*
+!third-part/.gitkeep
+tmp/*
+__pycache__
+.venv
+*.egg-info
+lib/
