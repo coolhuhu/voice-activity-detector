@@ -65,14 +65,14 @@ class BuildExtension(build_ext):
         install_dir = Path(self.build_lib).resolve() / package_name
         project_dir = Path(__file__).parent.resolve()
         
-        cmake_args = " -DENABLE_PYTHON=ON"
+        cmake_args = " -DVOICE_ACTIVITY_DETECTOR_ENABLE_PYTHON=ON"
         cmake_args += " -DCMAKE_BUILD_TYPE=Release"
         cmake_args += " -DBUILD_SHARED_LIBS=ON"
         cmake_args += f" -DCMAKE_INSTALL_PREFIX={install_dir}"
         
         cmake_build_args = " -j 4"
         
-        if is_windows() or is_macos():
+        if is_windows():
             raise NotImplementedError("Windows and Macos is currently not supported")
         
         build_cmd = f"""

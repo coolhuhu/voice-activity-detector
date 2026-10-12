@@ -13,7 +13,7 @@ function(download_kaldi_native_fbank)
   # If you don't have access to the Internet,
   # please pre-download kaldi-native-fbank
   set(possible_file_locations
-    ${PROJECT_SOURCE_DIR}/third-part/kaldi-native-fbank-1.22.3.tar.gz
+    ${VOICE_ACTIVITY_DETECTOR_THIRD_PARTY_DIR}/kaldi-native-fbank-1.22.3.tar.gz
   )
   set(local_file_HASH
     "SHA256=9176cc66fc7ce1edf85cf355b06e320c57db6297df74277f575183468893cf61"

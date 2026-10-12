@@ -7,7 +7,7 @@ function(download_pybind11)
   # If you don't have access to the Internet,
   # please pre-download pybind11
   set(possible_file_locations
-    ${CMAKE_SOURCE_DIR}/third-part/pybind11-3.0.2.tar.gz
+    ${VOICE_ACTIVITY_DETECTOR_THIRD_PARTY_DIR}/pybind11-3.0.2.tar.gz
   )
 
   foreach(f IN LISTS possible_file_locations)

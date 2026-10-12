@@ -1,10 +1,8 @@
 cmake_minimum_required(VERSION 3.14)
 project(voice-activity-detector)
 
-set(VOICE_ACTIVITY_DETECTOR_VERSION "0.3.0")
-
-option(BUILD_SHARED_LIBS "Build shared libraries instead of static libraries" OFF)
-option(ENABLE_PYTHON "Build Python bindings" OFF)
+set(VOICE_ACTIVITY_DETECTOR_VERSION "0.0.1")
+option(VOICE_ACTIVITY_DETECTOR_ENABLE_PYTHON "Build Python bindings" OFF)
 
 # Set default build type to Release
 if(NOT CMAKE_BUILD_TYPE)
@@ -48,11 +46,19 @@ if(BUILD_SHARED_LIBS OR ENABLE_PYTHON)
   set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 endif()
 
+set(
+  VOICE_ACTIVITY_DETECTOR_THIRD_PARTY_DIR "${PROJECT_SOURCE_DIR}/third-part"
+  CACHE STRING "The directory for third-party libraries." FORCE
+)
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
 include(kaldi-native-fbank)
 include(eigen)
 
+set(
+  VOICE_ACTIVITY_DETECTOR_ONNX_VERSION "1.17.0" CACHE
+  STRING "The onnxruntime version used by voice-activity-detector." FORCE
+)
 if(NOT TARGET onnxruntime)
   include(onnxruntime)
   if(TARGET onnxruntime)
@@ -60,13 +66,13 @@ if(NOT TARGET onnxruntime)
   endif()
 endif()
 
-if(${ENABLE_PYTHON})
+if(${VOICE_ACTIVITY_DETECTOR_ENABLE_PYTHON})
   include(pybind11)
 endif()
 
 add_subdirectory(voice-activity-detector)
 add_subdirectory(example)
 
-if(${ENABLE_PYTHON})
+if(${VOICE_ACTIVITY_DETECTOR_ENABLE_PYTHON})
   add_subdirectory(python)
 endif()
