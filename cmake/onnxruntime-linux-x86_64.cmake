@@ -1,10 +1,10 @@
 set(onnxruntime_URL 
   "https://github.com/microsoft/onnxruntime/releases/download/v${ONNX_VERSION}/onnxruntime-linux-x64-${ONNX_VERSION}.tgz"
 )
-set(onnxruntime_HASH "SHA256=92bf534e5fa5820c8dffe9de2850f84ed2a1c063e47c659ce09e8c7938aa2090")
+set(onnxruntime_HASH "SHA256=efc344d54d1969446ff5d3e55b54e205c6579c06333ecf1d34a04215eefae7c6")
 
 set(onnxruntime_possible_file_locations
-  ${PROJECT_SOURCE_DIR}/third-part/onnxruntime-linux-x64-1.14.0.tgz
+  ${VOICE_ACTIVITY_DETECTOR_THIRD_PARTY_DIR}/onnxruntime-linux-x64-${ONNX_VERSION}.tgz
 )
 
 foreach(f IN LISTS onnxruntime_possible_file_locations)

@@ -14,11 +14,8 @@ set(vad_srcs
   voice-activity-detector.cc
 )
 
-if(BUILD_SHARED_LIBS)
-  add_library(voice-activity-detector SHARED ${vad_srcs})
-else()
-  add_library(voice-activity-detector STATIC ${vad_srcs})
-endif()
+# only build shared library
+add_library(voice-activity-detector SHARED ${vad_srcs})
 
 set_target_properties(
     voice-activity-detector

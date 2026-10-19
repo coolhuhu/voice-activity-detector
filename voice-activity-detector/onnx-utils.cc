@@ -11,6 +11,22 @@
 #include "voice-activity-detector/macros.h"
 #include "voice-activity-detector/provider.h"
 
+#if defined(__APPLE__)
+#include "coreml_provider_factory.h"  // NOLINT
+#endif
+
+#if __ANDROID_API__ >= 27
+#include "nnapi_provider_factory.h"  // NOLINT
+#endif
+
+#if defined(_WIN32) && SHERPA_ONNX_ENABLE_DIRECTML == 1
+#include "dml_provider_factory.h"  // NOLINT
+#endif
+
+#if defined(SHERPA_ONNX_ENABLE_SPACEMIT)
+#include "spacemit_ort_env.h"  // NOLINT
+#endif
+
 namespace voice_activity_detector {
 
 static void OrtStatusFailure(OrtStatus *status, const char *s) {

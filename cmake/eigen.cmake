@@ -8,7 +8,7 @@ function(download_eigen)
   # If you don't have access to the Internet,
   # please pre-download eigen
   set(possible_file_locations
-    ${PROJECT_SOURCE_DIR}/third-part/eigen-3.4.0.tar.gz
+    ${VOICE_ACTIVITY_DETECTOR_THIRD_PARTY_DIR}/eigen-3.4.0.tar.gz
   )
 
   foreach(f IN LISTS possible_file_locations)
