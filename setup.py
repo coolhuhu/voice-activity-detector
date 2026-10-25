@@ -98,6 +98,7 @@ class BuildExtension(build_ext):
 
 setuptools.setup(
     version=get_package_version(),
+    license_files=["LICENSE"],
     ext_modules=[cmake_extension("voice_activity_detector.lib._voice_activity_detector")],
     package_data={package_name: ["lib/*"]},
     cmdclass={"build_ext": BuildExtension}
