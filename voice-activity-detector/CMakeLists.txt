@@ -12,6 +12,8 @@ set(vad_srcs
   vad-model.cc
   vad-model-config.cc
   voice-activity-detector.cc
+  firered-vad-model-config.cc
+  firered-vad-model.cc
 )
 
 # only build shared library
