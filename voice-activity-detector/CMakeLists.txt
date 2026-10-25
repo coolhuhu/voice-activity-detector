@@ -37,6 +37,7 @@ set(INTERFACE
   vad-model-config.h
   silero-vad-model-config.h
   ten-vad-model-config.h
+  firered-vad-model-config.h
 )
 
 install(TARGETS voice-activity-detector

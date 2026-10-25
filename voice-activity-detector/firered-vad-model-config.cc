@@ -47,9 +47,10 @@ bool FireRedVadModelConfig::Validate() const {
     return false;
   }
 
-  if (min_speech_duration <= 0) {
+  if (min_speech_duration < 0.08) {
     SHERPA_ONNX_LOGE(
         "Please use a larger value for --fire-red-vad-min-speech-duration. "
+        "Should be greater than or equal to 0.08. "
         "Given: "
         "%f",
         min_speech_duration);
@@ -65,6 +66,11 @@ bool FireRedVadModelConfig::Validate() const {
     return false;
   }
 
+  if (window_size != 400) {
+    SHERPA_ONNX_LOGE("Expected window size 400. Given: %d", window_size);
+    return false;
+  }
+
   return true;
 }
 
@@ -77,8 +83,7 @@ std::string FireRedVadModelConfig::ToString() const {
   os << "min_silence_duration=" << min_silence_duration << ", ";
   os << "min_speech_duration=" << min_speech_duration << ", ";
   os << "max_speech_duration=" << max_speech_duration << ", ";
-  os << "window_size=" << window_size << ", ";
-  os << "neg_threshold=" << neg_threshold << ")";
+  os << "window_size=" << window_size << ")";
 
   return os.str();
 }

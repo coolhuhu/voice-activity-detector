@@ -1,5 +1,6 @@
 #include <filesystem>
 #include <fstream>
+#include <iomanip>
 #include <iostream>
 #include <sstream>
 #include <string>
@@ -17,7 +18,7 @@ std::string FormatFloat(float value) {
 }
 
 // VAD type enumeration
-enum VadType { kSilero = 0, kTen = 2 };
+enum VadType { kSilero = 0, kTen = 2, kFireRed = 3 };
 
 // Structure to hold command line arguments
 struct CommandLineArgs {
@@ -27,10 +28,10 @@ struct CommandLineArgs {
 
   // Required options
   std::string output_dir;
-  VadType vad_type;
+  VadType vad_type = kSilero;
   std::string vad_type_str;
-  int32_t sample_rate;
-  int32_t window_size;
+  int32_t sample_rate = 0;
+  int32_t window_size = 0;
 
   // Optional options with default values
   float threshold = 0.5f;
@@ -52,7 +53,7 @@ void PrintUsage(const char *program_name) {
       << "\nUsage:\n"
       << "  " << program_name << " <wavlist.txt> <model.onnx> \\\n"
       << "    --output-dir <dir> \\\n"
-      << "    --vad-type <silero|ten> \\\n"
+      << "    --vad-type <silero|ten|firered> \\\n"
       << "    --sample-rate <rate> \\\n"
       << "    --window-size <size> \\\n"
       << "    [--threshold 0.5] \\\n"
@@ -68,15 +69,16 @@ void PrintUsage(const char *program_name) {
       << "  model.onnx           Path to the VAD model file\n"
       << "\nRequired options:\n"
       << "  --output-dir, -o     Output directory for segmented audio files\n"
-      << "  --vad-type, -t       VAD model type: silero or ten\n"
+      << "  --vad-type, -t       VAD model type: silero, ten, or firered\n"
       << "  --sample-rate        Sample rate in Hz (e.g., 8000, 16000)\n"
       << "  --window-size        Window size in samples\n"
       << "\nOptional options:\n"
-      << "  --threshold          Speech probability threshold (default: 0.5)\n"
+      << "  --threshold          Speech probability threshold (default: 0.5; "
+         "FireRed: 0.01 <= value < 1)\n"
       << "  --min-silence-duration Minimum silence duration in seconds "
          "(default: 0.5)\n"
       << "  --min-speech-duration  Minimum speech duration in seconds "
-         "(default: 0.25)\n"
+         "(default: 0.25; FireRed: >= 0.08)\n"
       << "  --max-speech-duration  Maximum speech duration in seconds "
          "(default: 20)\n"
       << "  --num-threads        Number of threads for ONNX runtime "
@@ -85,9 +87,12 @@ void PrintUsage(const char *program_name) {
       << "  --debug              Enable debug output\n"
       << "\nWindow size requirements:\n"
       << "  Silero VAD: 512 for 16000Hz, 256 for 8000Hz\n"
-      << "  Ten VAD:    512 for 16000Hz\n"
+      << "  Ten VAD:    512-768 for 16000Hz\n"
+      << "  FireRed VAD: 400 for 16000Hz\n"
       << "\nExample:\n"
-      << "  " << program_name << " wavlist.txt silero_vad.onnx \\\n"
+      << "  " << program_name
+      << " wavlist.txt model/silero_vad_v5.onnx "
+         "\\\n"
       << "    --output-dir ./segments \\\n"
       << "    --vad-type silero \\\n"
       << "    --sample-rate 16000 \\\n"
@@ -117,6 +122,16 @@ bool ValidateWindowSize(VadType vad_type, int32_t sample_rate,
 
     std::cerr << "Error: For Ten VAD with 16000Hz, window_size must be between "
                  "512 and 768, "
+              << "Got: sample_rate=" << sample_rate
+              << ", window_size=" << window_size << std::endl;
+    return false;
+  }
+
+  if (vad_type == kFireRed) {
+    if (sample_rate == 16000 && window_size == 400) return true;
+
+    std::cerr << "Error: For FireRed VAD, sample_rate must be 16000Hz and "
+                 "window_size must be 400. "
               << "Got: sample_rate=" << sample_rate
               << ", window_size=" << window_size << std::endl;
     return false;
@@ -256,9 +271,11 @@ CommandLineArgs ParseCommandLineArgs(int argc, char **argv) {
     args.vad_type = kSilero;
   } else if (args.vad_type_str == "ten") {
     args.vad_type = kTen;
+  } else if (args.vad_type_str == "firered") {
+    args.vad_type = kFireRed;
   } else {
     std::cerr << "Error: Invalid VAD type '" << args.vad_type_str
-              << "'. Must be: silero or ten" << std::endl;
+              << "'. Must be: silero, ten, or firered" << std::endl;
     return args;
   }
 
@@ -294,6 +311,13 @@ voice_activity_detector::VadModelConfig CreateVadConfig(
     vad_config.ten_vad.min_speech_duration = args.min_speech_duration;
     vad_config.ten_vad.window_size = args.window_size;
     vad_config.ten_vad.max_speech_duration = args.max_speech_duration;
+  } else if (args.vad_type == kFireRed) {
+    vad_config.firered_vad.model = args.model_path;
+    vad_config.firered_vad.threshold = args.threshold;
+    vad_config.firered_vad.min_silence_duration = args.min_silence_duration;
+    vad_config.firered_vad.min_speech_duration = args.min_speech_duration;
+    vad_config.firered_vad.window_size = args.window_size;
+    vad_config.firered_vad.max_speech_duration = args.max_speech_duration;
   }
 
   return vad_config;
@@ -372,28 +396,28 @@ int ProcessAudioFile(voice_activity_detector::VoiceActivityDetector *vad,
       is_eof = true;
       vad->Flush();
     }
+  }
 
-    // Process detected segments
-    while (!vad->Empty()) {
-      const auto &segment = vad->Front();
-      float start_time = static_cast<float>(segment.start) / sample_rate;
-      float end_time =
-          static_cast<float>(segment.start + segment.samples.size()) /
-          sample_rate;
-      std::string base_name = GetBaseName(input_file);
-      fs::path output_file_path =
-          fs::path(output_dir) /
-          (base_name + "_seg_" + std::to_string(segment_count + 1) + "_" +
-           FormatFloat(start_time) + "-" + FormatFloat(end_time) + ".wav");
-      std::string output_file = output_file_path.string();
+  // Process detected segments
+  while (!vad->Empty()) {
+    const auto &segment = vad->Front();
+    float start_time = static_cast<float>(segment.start) / sample_rate;
+    float end_time =
+        static_cast<float>(segment.start + segment.samples.size()) /
+        sample_rate;
+    std::string base_name = GetBaseName(input_file);
+    fs::path output_file_path =
+        fs::path(output_dir) /
+        (base_name + "_seg_" + std::to_string(segment_count + 1) + "_" +
+         FormatFloat(start_time) + "-" + FormatFloat(end_time) + ".wav");
+    std::string output_file = output_file_path.string();
 
-      voice_activity_detector::WriteWave(output_file, sample_rate,
-                                         segment.samples.data(),
-                                         segment.samples.size());
+    voice_activity_detector::WriteWave(output_file, sample_rate,
+                                       segment.samples.data(),
+                                       segment.samples.size());
 
-      segment_count++;
-      vad->Pop();
-    }
+    segment_count++;
+    vad->Pop();
   }
 
   std::cout << segment_count << " segment(s)" << std::endl;
@@ -403,6 +427,11 @@ int ProcessAudioFile(voice_activity_detector::VoiceActivityDetector *vad,
 int main(int argc, char **argv) {
   CommandLineArgs args = ParseCommandLineArgs(argc, argv);
   if (!args.is_valid) {
+    return -1;
+  }
+
+  voice_activity_detector::VadModelConfig vad_config = CreateVadConfig(args);
+  if (!vad_config.Validate()) {
     return -1;
   }
 
@@ -426,7 +455,6 @@ int main(int argc, char **argv) {
   std::cout << "Found " << file_list.size() << " audio file(s) to process"
             << std::endl;
 
-  voice_activity_detector::VadModelConfig vad_config = CreateVadConfig(args);
   voice_activity_detector::VoiceActivityDetector vad(vad_config);
 
   int success_count = 0;

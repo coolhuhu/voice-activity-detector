@@ -4,14 +4,14 @@ A command-line tool for splitting long audio files into speech segments using Vo
 
 ## Overview
 
-`vad-segmenter` processes a batch of audio files listed in a text file, detects speech segments using VAD models (Silero or Ten), and saves each segment as a separate WAV file.
+`vad-segmenter` processes a batch of audio files listed in a text file, detects speech segments using Silero, Ten, or FireRed VAD, and saves each segment as a separate WAV file. The input WAV sample rate must match `--sample-rate`; the tool does not resample audio.
 
 ## Usage
 
 ```bash
-./vad-segmenter <wavlist.txt> <model.onnx> \
+./build/bin/vad-segmenter <wavlist.txt> <model.onnx> \
     --output-dir <dir> \
-    --vad-type <silero|ten> \
+    --vad-type <silero|ten|firered> \
     --sample-rate <rate> \
     --window-size <size> \
     [--threshold 0.5] \
@@ -35,7 +35,7 @@ A command-line tool for splitting long audio files into speech segments using Vo
 | Option | Short | Description |
 |--------|-------|-------------|
 | `--output-dir` | `-o` | Output directory for segmented audio files |
-| `--vad-type` | `-t` | VAD model type: `silero` or `ten` |
+| `--vad-type` | `-t` | VAD model type: `silero`, `ten`, or `firered` |
 | `--sample-rate` | | Sample rate in Hz (e.g., 8000, 16000) |
 | `--window-size` | | Window size in samples |
 
@@ -46,7 +46,7 @@ A command-line tool for splitting long audio files into speech segments using Vo
 | `--threshold` | 0.5 | Speech probability threshold (0.0 - 1.0) |
 | `--min-silence-duration` | 0.5 | Minimum silence duration in seconds |
 | `--min-speech-duration` | 0.25 | Minimum speech duration in seconds |
-| `--max-speech-duration` | 20 | Maximum speech duration in seconds |
+| `--max-speech-duration` | 20 | Duration after which detection uses a stricter threshold to help end long segments |
 | `--num-threads` | 1 | Number of threads for ONNX runtime |
 | `--provider` | cpu | ONNX runtime provider (e.g., cpu, cuda) |
 | `--debug` | false | Enable debug output |
@@ -59,8 +59,10 @@ The window size must match the sample rate and VAD type:
 |----------|-------------|-------------------|
 | Silero VAD | 16000 Hz | 512 |
 | Silero VAD | 8000 Hz | 256 |
-| Ten VAD | 16000 Hz | 512 |
-| Ten VAD | 8000 Hz | 256 |
+| Ten VAD | 16000 Hz | 512–768 |
+| FireRed VAD | 16000 Hz | 400 |
+
+For FireRed VAD, `--min-speech-duration` must be at least `0.08` seconds. Its threshold must be at least `0.01` and less than `1`.
 
 ## Examples
 
@@ -75,7 +77,7 @@ Create a file list (`wavlist.txt`):
 
 Run the segmenter:
 ```bash
-./vad-segmenter wavlist.txt silero_vad.onnx \
+./build/bin/vad-segmenter wavlist.txt model/silero_vad_v5.onnx \
     --output-dir ./segments \
     --vad-type silero \
     --sample-rate 16000 \
@@ -85,15 +87,29 @@ Run the segmenter:
 ### Example 2: Ten VAD with custom thresholds
 
 ```bash
-./vad-segmenter wavlist.txt ten_vad.onnx \
+./build/bin/vad-segmenter wavlist.txt model/ten-vad.onnx \
     --output-dir ./output \
     --vad-type ten \
-    --sample-rate 8000 \
-    --window-size 256 \
+    --sample-rate 16000 \
+    --window-size 512 \
     --threshold 0.6 \
     --min-silence-duration 0.3 \
     --min-speech-duration 0.5
 ```
+
+### Example 3: FireRed streaming VAD
+
+Run from the project root with 16 kHz WAV files listed in `wavlist.txt`:
+
+```bash
+./build/bin/vad-segmenter wavlist.txt model/firered_stream_vad.onnx \
+    --output-dir ./firered-segments \
+    --vad-type firered \
+    --sample-rate 16000 \
+    --window-size 400
+```
+
+The optional threshold and duration flags shown above also apply to FireRed VAD.
 
 ## Output File Naming
 

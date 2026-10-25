@@ -4,6 +4,7 @@
 
 #include "voice-activity-detector/vad-model.h"
 
+#include "voice-activity-detector/firered-vad-model.h"
 #include "voice-activity-detector/macros.h"
 #include "voice-activity-detector/silero-vad-model.h"
 #include "voice-activity-detector/ten-vad-model.h"
@@ -17,6 +18,10 @@ std::unique_ptr<VadModel> VadModel::Create(const VadModelConfig &config) {
 
   if (!config.ten_vad.model.empty()) {
     return std::make_unique<TenVadModel>(config);
+  }
+
+  if (!config.firered_vad.model.empty()) {
+    return std::make_unique<FireRedVadModel>(config);
   }
 
   SHERPA_ONNX_LOGE("Please provide a vad model");

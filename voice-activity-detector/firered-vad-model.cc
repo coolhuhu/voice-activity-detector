@@ -43,10 +43,6 @@ class FbankFeatureExtractor {
     opts_.frame_opts.round_to_power_of_two = true;
 
     opts_.mel_opts.num_bins = 80;  // feature dim
-
-    opts_.mel_opts.high_freq = -400.0f;
-    opts_.mel_opts.low_freq = 20.0f;
-
     opts_.mel_opts.is_librosa = false;
 
     fbank_ = std::make_unique<knf::OnlineFbank>(opts_);
@@ -260,8 +256,16 @@ class FireRedVadModel::Impl {
       SHERPA_ONNX_EXIT(-1);
     }
 
-    min_silence_samples_ = sample_rate_ * 0.3f;
-    min_speech_samples_ = sample_rate_ * 0.13f;
+    min_silence_samples_ =
+        sample_rate_ * config_.firered_vad.min_silence_duration;
+    min_silence_frame_ =
+        std::max(1, static_cast<int32_t>(
+                        config_.firered_vad.min_silence_duration * 100 + 0.5f));
+    min_speech_samples_ =
+        sample_rate_ * config_.firered_vad.min_speech_duration;
+    min_speech_frame_ =
+        std::max(8, static_cast<int32_t>(
+                        config_.firered_vad.min_speech_duration * 100 + 0.5f));
 
     Reset();
   }
@@ -383,7 +387,7 @@ class FireRedVadModel::Impl {
       case VadState::kPossibleSpeech:
         if (is_speech) {
           speech_cnt_ += 1;
-          if (speech_cnt_ >= kMinSpeechFrame) {
+          if (speech_cnt_ >= min_speech_frame_) {
             state_ = VadState::kSpeech;
             int32_t start_frame =
                 std::max(1, frame_cnt_ - speech_cnt_ + 1 - kPadStartFrame);
@@ -443,8 +447,8 @@ class FireRedVadModel::Impl {
  private:
   static constexpr int32_t kSmoothWindowSize = 5;
   static constexpr int32_t kPadStartFrame = 5;
-  static constexpr int32_t kMinSpeechFrame = 8;
   static constexpr int32_t kMaxSpeechFrame = 2000;
+  int32_t min_speech_frame_ = 8;
 
   VadModelConfig config_;
 
