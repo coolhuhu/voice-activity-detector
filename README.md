@@ -34,7 +34,8 @@ model/
 ├── silero_vad_v5.onnx
 ├── silero_vad_v6.onnx
 ├── ten-vad.onnx
-└── ten-vad.int8.onnx
+├── ten-vad.int8.onnx
+└── firered_stream_vad.onnx
 
 example/
 ├── silero-vad.cc          # Silero VAD 示例程序
