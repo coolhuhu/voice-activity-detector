@@ -12,6 +12,8 @@ set(vad_srcs
   vad-model.cc
   vad-model-config.cc
   voice-activity-detector.cc
+  firered-vad-model-config.cc
+  firered-vad-model.cc
 )
 
 # only build shared library
@@ -35,6 +37,7 @@ set(INTERFACE
   vad-model-config.h
   silero-vad-model-config.h
   ten-vad-model-config.h
+  firered-vad-model-config.h
 )
 
 install(TARGETS voice-activity-detector

@@ -46,12 +46,9 @@ bool VadModelConfig::Validate() const {
     }
     return ten_vad.Validate();
   }
-  if (!silero_vad.model.empty()) {
-    return silero_vad.Validate();
-  }
 
-  if (!ten_vad.model.empty()) {
-    return ten_vad.Validate();
+  if (!firered_vad.model.empty()) {
+    return firered_vad.Validate();
   }
 
   SHERPA_ONNX_LOGE("Please provide one VAD model.");

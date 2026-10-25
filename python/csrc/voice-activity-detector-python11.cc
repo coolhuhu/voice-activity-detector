@@ -6,6 +6,7 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
+#include "voice-activity-detector/firered-vad-model-config.h"
 #include "voice-activity-detector/silero-vad-model-config.h"
 #include "voice-activity-detector/ten-vad-model-config.h"
 #include "voice-activity-detector/vad-model-config.h"
@@ -62,12 +63,30 @@ static void BindTenVadModelConfig(py::module &m) {
       .def("__str__", &TenVadModelConfig::ToString);
 }
 
+// Bind FireRed VAD model configuration
+static void BindFireRedVadModelConfig(py::module &m) {
+  py::class_<FireRedVadModelConfig>(m, "FireRedVadModelConfig")
+      .def(py::init<>())
+      .def_readwrite("model", &FireRedVadModelConfig::model)
+      .def_readwrite("threshold", &FireRedVadModelConfig::threshold)
+      .def_readwrite("min_silence_duration",
+                     &FireRedVadModelConfig::min_silence_duration)
+      .def_readwrite("min_speech_duration",
+                     &FireRedVadModelConfig::min_speech_duration)
+      .def_readwrite("window_size", &FireRedVadModelConfig::window_size)
+      .def_readwrite("max_speech_duration",
+                     &FireRedVadModelConfig::max_speech_duration)
+      .def("Validate", &FireRedVadModelConfig::Validate)
+      .def("__str__", &FireRedVadModelConfig::ToString);
+}
+
 // 绑定 VadModelConfig
 static void BindVadModelConfig(py::module &m) {
   py::class_<VadModelConfig>(m, "VadModelConfig")
       .def(py::init<>())
       .def_readwrite("silero_vad", &VadModelConfig::silero_vad)
       .def_readwrite("ten_vad", &VadModelConfig::ten_vad)
+      .def_readwrite("firered_vad", &VadModelConfig::firered_vad)
       .def_readwrite("sample_rate", &VadModelConfig::sample_rate)
       .def_readwrite("num_threads", &VadModelConfig::num_threads)
       .def_readwrite("provider", &VadModelConfig::provider)
@@ -114,6 +133,7 @@ PYBIND11_MODULE(_voice_activity_detector, m) {
   voice_activity_detector::BindSpeechSegment(m);
   voice_activity_detector::BindSileroVadModelConfig(m);
   voice_activity_detector::BindTenVadModelConfig(m);
+  voice_activity_detector::BindFireRedVadModelConfig(m);
   voice_activity_detector::BindVadModelConfig(m);
   voice_activity_detector::BindVoiceActivityDetector(m);
 }

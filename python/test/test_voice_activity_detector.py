@@ -7,10 +7,10 @@ from typing import Tuple
 import numpy as np
 
 from voice_activity_detector import (
-    VoiceActivityDetector, 
+    VoiceActivityDetector,
     OnlineVoiceActivityDetector,
     SpeechSegmentStatus,
-    VadType
+    VadType,
 )
 
 
@@ -37,12 +37,12 @@ def read_wave(wave_filename: str) -> Tuple[np.ndarray, int]:
 
         samples_float32 = samples_float32 / 32768
         return samples_float32, f.getframerate()
-    
 
-class TestVoiceActivityDetector(unittest.TestCase):    
-    
-    def offline_pipeline(self, vad: VoiceActivityDetector,
-                         samples: np.ndarray, sample_rate: int):
+
+class TestVoiceActivityDetector(unittest.TestCase):
+    def offline_pipeline(
+        self, vad: VoiceActivityDetector, samples: np.ndarray, sample_rate: int
+    ):
         window_size = vad.window_size()
         print(f"vad.window_size: {window_size}")
 
@@ -52,7 +52,7 @@ class TestVoiceActivityDetector(unittest.TestCase):
 
         while not is_eof:
             if offset + window_size < samples.shape[0]:
-                vad.accept_waveform(samples[offset:offset + window_size])
+                vad.accept_waveform(samples[offset : offset + window_size])
                 offset += window_size
             else:
                 vad.accept_waveform(samples[offset:])
@@ -72,8 +72,10 @@ class TestVoiceActivityDetector(unittest.TestCase):
                 vad.pop()
 
         print(f"Total speech segments: {len(samples_without_silence)}")
-        print(f"Total samples without silence: {sum(len(s) for s in samples_without_silence)}")
-        
+        print(
+            f"Total samples without silence: {sum(len(s) for s in samples_without_silence)}"
+        )
+
     def vad_test_pipeline(self, model: str, wav_path: str, vad_type: VadType):
         samples, sample_rate = read_wave(wav_path)
         print(f"sample rate: {sample_rate}")
@@ -90,7 +92,8 @@ class TestVoiceActivityDetector(unittest.TestCase):
                 threshold,
                 min_silence_duration,
                 min_speech_duration,
-                max_speech_duration)
+                max_speech_duration,
+            )
         elif vad_type is VadType.Ten:
             vad = VoiceActivityDetector.init_ten(
                 model,
@@ -98,7 +101,17 @@ class TestVoiceActivityDetector(unittest.TestCase):
                 threshold,
                 min_silence_duration,
                 min_speech_duration,
-                max_speech_duration)
+                max_speech_duration,
+            )
+        elif vad_type is VadType.FireRed:
+            vad = VoiceActivityDetector.init_firered(
+                model,
+                sample_rate,
+                threshold,
+                min_silence_duration,
+                min_speech_duration,
+                max_speech_duration,
+            )
         else:
             raise ValueError("Invalid VAD type")
 
@@ -106,7 +119,7 @@ class TestVoiceActivityDetector(unittest.TestCase):
 
     def test_ten_vad(self):
         print("test ten vad for 16KHz audio")
-        
+
         current_dir = Path(__file__).resolve()
         model = os.path.join(current_dir, "../../../model/ten-vad.onnx")
         model = Path(model).resolve()
@@ -131,7 +144,7 @@ class TestVoiceActivityDetector(unittest.TestCase):
         print(f"wav path: {wav_path}")
 
         self.vad_test_pipeline(str(model), str(wav_path), VadType.Silero)
-    
+
     def test_silero_vad_8k(self):
         print("test silero_v6 vad for 8KHz audio")
 
@@ -145,7 +158,7 @@ class TestVoiceActivityDetector(unittest.TestCase):
         print(f"wav path: {wav_path}")
 
         self.vad_test_pipeline(str(model), str(wav_path), VadType.Silero)
-    
+
     def test_online_silero_vad(self):
         """Test OnlineVoiceActivityDetector with Silero VAD model."""
         print("test online silero vad for 16KHz audio")
@@ -169,11 +182,15 @@ class TestVoiceActivityDetector(unittest.TestCase):
         min_speech_duration = 0.25
         max_speech_duration = 20
 
-        online_vad = OnlineVoiceActivityDetector(VadType.Silero, str(model), 
-                                                sample_rate, threshold, 
-                                                min_silence_duration, 
-                                                min_speech_duration, 
-                                                max_speech_duration)
+        online_vad = OnlineVoiceActivityDetector(
+            VadType.Silero,
+            str(model),
+            sample_rate,
+            threshold,
+            min_silence_duration,
+            min_speech_duration,
+            max_speech_duration,
+        )
 
         # Process audio in chunks (100ms)
         chunk_size = int(0.1 * sample_rate)
@@ -181,7 +198,7 @@ class TestVoiceActivityDetector(unittest.TestCase):
         n = samples.shape[0]
 
         while offset + chunk_size < n:
-            online_vad.accept_waveform(samples[offset: offset + chunk_size])
+            online_vad.accept_waveform(samples[offset : offset + chunk_size])
             offset += chunk_size
 
             if not online_vad.empty():
@@ -190,7 +207,9 @@ class TestVoiceActivityDetector(unittest.TestCase):
                     if seg.start != -1:
                         start_time = seg.start / sample_rate
                         end_time = (seg.start + len(seg.samples)) / sample_rate
-                        print(f"{start_time:.3f} -- {end_time:.3f} segment_id[{seg.segment_id}] status: {seg.status.name}")
+                        print(
+                            f"{start_time:.3f} -- {end_time:.3f} segment_id[{seg.segment_id}] status: {seg.status.name}"
+                        )
 
                     if seg.status == SpeechSegmentStatus.kEND:
                         print("detect endpoint")
@@ -206,8 +225,10 @@ class TestVoiceActivityDetector(unittest.TestCase):
                 if seg.start != -1:
                     start_time = seg.start / sample_rate
                     end_time = (seg.start + len(seg.samples)) / sample_rate
-                    print(f"{start_time:.3f} -- {end_time:.3f} segment_id[{seg.segment_id}] status: {seg.status.name}")
-                    
+                    print(
+                        f"{start_time:.3f} -- {end_time:.3f} segment_id[{seg.segment_id}] status: {seg.status.name}"
+                    )
+
                 if seg.status == SpeechSegmentStatus.kEND:
                     print("detect endpoint")
 

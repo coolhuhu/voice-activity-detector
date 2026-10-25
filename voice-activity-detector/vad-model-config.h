@@ -6,6 +6,7 @@
 
 #include <string>
 
+#include "voice-activity-detector/firered-vad-model-config.h"
 #include "voice-activity-detector/silero-vad-model-config.h"
 #include "voice-activity-detector/ten-vad-model-config.h"
 
@@ -14,6 +15,7 @@ namespace voice_activity_detector {
 struct VadModelConfig {
   SileroVadModelConfig silero_vad;
   TenVadModelConfig ten_vad;
+  FireRedVadModelConfig firered_vad;
 
   int32_t sample_rate = 8000;
   int32_t num_threads = 1;

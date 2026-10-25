@@ -174,7 +174,7 @@ class SileroVadModel::Impl {
       // 32 for 8kHz
       if (sample_rate_ == 16000) {
         window_overlap_ = 64;
-      } else if (sample_rate_ = 8000) {
+      } else if (sample_rate_ == 8000) {
         window_overlap_ = 32;
       }
     } else if ((input_names_.size() == 4 && output_names_.size() == 3) ||
